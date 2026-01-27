@@ -2,13 +2,22 @@
 <html>
   <head>
     <title>Simple Map App</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="main.css">
   </head>
   <body>
-    <h3>My First Google Map</h3>
-    <div id="map"></div>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
-    <script src="script.js"></script>
+    <div class="map-wrapper">
+      <div id="map"></div>
+      <button id="locate-btn" class="map-button">Find Me</button>
+
+      <script src="map.js"></script>
+
+      <script 
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_aIT0XI5pSi1c0dvRpk4i7GR4zEnecB8&callback=initMap" 
+          async 
+          defer>
+      </script>
+    </div>
+
   </body>
 </html>
