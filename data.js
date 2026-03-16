@@ -17,7 +17,7 @@ const BUILDINGS = [
     description: "Multi-floor library with study rooms, research databases, printing services, and a makerspace.",
     capacity: 700, accessibility: true,
     adminNotes: "24hr study area on ground floor during exams. Makerspace booking required.",
-    labelX: 1020, labelY: 520
+    labelX: 975, labelY: 520
   },
   {
     id: "SHA", name: "Shaw Hall", category: "tutorials", color: "#ffb74d",
@@ -26,7 +26,7 @@ const BUILDINGS = [
     description: "Houses health science programs with labs, lecture theatres, and simulation suites.",
     capacity: 1000, accessibility: true,
     adminNotes: "Lab safety training mandatory. Simulation suite booking via department.",
-    labelX: 1343, labelY: 450
+    labelX: 1250, labelY: 450
   },
   {
     id: "ERC", name: "Energy Research Centre", category: "research", color: "#ba68c8",
@@ -35,7 +35,7 @@ const BUILDINGS = [
     description: "Dedicated to sustainable energy research and innovation, housing solar, wind, and smart grid labs.",
     capacity: 200, accessibility: true,
     adminNotes: "Shared facility with external research partners. Badge access required.",
-    labelX: 1343, labelY: 720
+    labelX: 1200, labelY: 720
   },
   {
     id: "BIT", name: "Business & IT Building", category: "business", color: "#f06292",
@@ -44,7 +44,7 @@ const BUILDINGS = [
     description: "Houses the Faculty of Business and IT with lecture halls, seminar rooms, and computing labs.",
     capacity: 1200, accessibility: true,
     adminNotes: "Multiple lecture halls up to 200 seats. Computer labs on floors 2–4.",
-    labelX: 1343, labelY: 1000
+    labelX: 1150, labelY: 1000
   },
   {
     id: "REC", name: "Recreation Centre/Gym", category: "recreation", color: "#ef6c00",
@@ -53,7 +53,7 @@ const BUILDINGS = [
     description: "Full-service recreation centre with gym, pool, squash courts, fitness classes, and intramural sports.",
     capacity: 600, accessibility: true,
     adminNotes: "Student membership included in fees. Day passes available for staff.",
-    labelX: 450, labelY: 1207
+    labelX: 200, labelY: 1207
   },
   {
     id: "SCI", name: "UA - Science Building", category: "science", color: "#26a69a",
@@ -62,6 +62,6 @@ const BUILDINGS = [
     description: "Central hub for student services including registration, financial aid, and academic advising.",
     capacity: 800, accessibility: true,
     adminNotes: "Main student services hub. High foot traffic during registration periods.",
-    labelX: 1115, labelY: 1220
+    labelX: 820, labelY: 1220
   },
 ];

@@ -23,9 +23,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function fitMap() {
   const vp = document.getElementById('mapViewport');
-  scale = Math.min(vp.clientWidth / IMG_W, vp.clientHeight / IMG_H) * 0.98;
-  panX = (vp.clientWidth  - IMG_W * scale) / 2;
-  panY = (vp.clientHeight - IMG_H * scale) / 2;
+  const vw = vp.clientWidth;
+  const vh = vp.clientHeight;
+  scale = Math.min(vw / IMG_W, vh / IMG_H) * 0.98;
+  panX = Math.round((vw - IMG_W * scale) / 2);
+  panY = Math.round((vh - IMG_H * scale) / 2);
   applyXform();
 }
 
