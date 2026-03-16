@@ -18,6 +18,7 @@ window.addEventListener('DOMContentLoaded', () => {
   buildButtons();
   bindEvents();
   updateVisibility();
+  refreshBadges();
 });
 
 function fitMap() {
@@ -128,6 +129,7 @@ function openPanel(b) {
       <div class="panel-title">${b.name}</div>
     </div>
     <div class="panel-body">
+      ${renderUpdatesSection(b)}
       <div class="info-section">
         <div class="info-row">
           <div class="info-icon">📋</div>
@@ -265,7 +267,8 @@ function bindEvents() {
       if (el && prev) { el.classList.remove('active'); el.style.transform = 'translate(-50%,-50%) scale(1)'; }
       selectedId = null; closePanel();
     }
-    if ((e.key==='f'||e.key==='/') && document.activeElement.id !== 'searchInput') {
+    const tag = document.activeElement.tagName;
+    if ((e.key==='f'||e.key==='/') && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
       e.preventDefault(); document.getElementById('searchInput').focus();
     }
   });
@@ -279,4 +282,166 @@ function zoomBy(factor) {
   panY = cy - (cy - panY) * (ns/scale);
   scale = ns;
   applyXform();
+}
+
+// ── UPDATES SYSTEM ────────────────────────────────────────────────────────
+
+function loadUpdates() {
+  try { return JSON.parse(localStorage.getItem('campusUpdates') || '{}'); }
+  catch { return {}; }
+}
+
+function saveUpdates(updates) {
+  localStorage.setItem('campusUpdates', JSON.stringify(updates));
+}
+
+function getUpdatesForBuilding(id) {
+  const all = loadUpdates();
+  return (all[id] || []).sort((a, b) => b.ts - a.ts);
+}
+
+function addUpdate(buildingId, title, message, type) {
+  const all = loadUpdates();
+  if (!all[buildingId]) all[buildingId] = [];
+  all[buildingId].push({
+    id: Date.now() + Math.random().toString(36).slice(2),
+    title, message, type,
+    ts: Date.now()
+  });
+  saveUpdates(all);
+}
+
+function deleteUpdate(buildingId, updateId) {
+  const all = loadUpdates();
+  if (all[buildingId]) {
+    all[buildingId] = all[buildingId].filter(u => u.id !== updateId);
+    saveUpdates(all);
+  }
+}
+
+function getUpdateCount(id) {
+  return getUpdatesForBuilding(id).length;
+}
+
+// Refresh all button badges
+function refreshBadges() {
+  BUILDINGS.forEach(b => {
+    const btn = document.getElementById('btn-' + b.id);
+    if (!btn) return;
+    const existing = btn.querySelector('.update-badge');
+    if (existing) existing.remove();
+    const count = getUpdateCount(b.id);
+    if (count > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'update-badge';
+      badge.textContent = count;
+      btn.appendChild(badge);
+    }
+  });
+}
+
+// ── Updates HTML renderers ─────────────────────────────────────────────────
+
+function renderUpdatesSection(b) {
+  const updates = getUpdatesForBuilding(b.id);
+
+  const studentView = updates.length === 0 ? '' : `
+    <div class="updates-section">
+      <div class="updates-header">
+        <span class="updates-icon">📢</span>
+        <span class="updates-title">Building Updates</span>
+        <span class="updates-count">${updates.length}</span>
+      </div>
+      ${updates.map(u => `
+        <div class="update-card update-${u.type}">
+          <div class="update-card-header">
+            <span class="update-type-icon">${typeIcon(u.type)}</span>
+            <span class="update-card-title">${escHtml(u.title)}</span>
+            <span class="update-card-time">${timeAgo(u.ts)}</span>
+          </div>
+          <div class="update-card-msg">${escHtml(u.message)}</div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  const adminForm = !adminMode ? '' : `
+    <div class="admin-updates-section" id="adminUpdates-${b.id}">
+      <div class="admin-updates-header">
+        <span>⚙ Manage Updates</span>
+      </div>
+
+      ${updates.length > 0 ? `
+        <div class="admin-update-list">
+          ${updates.map(u => `
+            <div class="admin-update-item">
+              <div class="admin-update-item-info">
+                <span class="update-type-icon">${typeIcon(u.type)}</span>
+                <span class="admin-update-item-title">${escHtml(u.title)}</span>
+                <span class="update-card-time">${timeAgo(u.ts)}</span>
+              </div>
+              <button class="delete-update-btn" onclick="handleDeleteUpdate('${b.id}','${u.id}')">✕</button>
+            </div>
+          `).join('')}
+        </div>` : ''}
+
+      <div class="add-update-form">
+        <div class="form-row">
+          <input id="upd-title-${b.id}" class="upd-input" type="text" placeholder="Update title…" maxlength="80" />
+        </div>
+        <div class="form-row">
+          <textarea id="upd-msg-${b.id}" class="upd-textarea" placeholder="Details…" rows="3" maxlength="300"></textarea>
+        </div>
+        <div class="form-row form-row-split">
+          <select id="upd-type-${b.id}" class="upd-select">
+            <option value="info">ℹ Info</option>
+            <option value="warning">⚠ Warning</option>
+            <option value="closure">🚫 Closure</option>
+          </select>
+          <button class="upd-submit-btn" onclick="handleAddUpdate('${b.id}')">Post Update</button>
+        </div>
+      </div>
+    </div>`;
+
+  return studentView + adminForm;
+}
+
+function handleAddUpdate(buildingId) {
+  const title = document.getElementById(`upd-title-${buildingId}`)?.value.trim();
+  const message = document.getElementById(`upd-msg-${buildingId}`)?.value.trim();
+  const type = document.getElementById(`upd-type-${buildingId}`)?.value;
+  if (!title || !message) {
+    alert('Please enter both a title and message.');
+    return;
+  }
+  addUpdate(buildingId, title, message, type);
+  refreshBadges();
+  // Reopen panel to reflect new update
+  const b = BUILDINGS.find(x => x.id === buildingId);
+  openPanel(b);
+}
+
+function handleDeleteUpdate(buildingId, updateId) {
+  deleteUpdate(buildingId, updateId);
+  refreshBadges();
+  const b = BUILDINGS.find(x => x.id === buildingId);
+  openPanel(b);
+}
+
+function typeIcon(type) {
+  return { info: 'ℹ️', warning: '⚠️', closure: '🚫' }[type] || 'ℹ️';
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d ago`;
+  if (h > 0) return `${h}h ago`;
+  if (m > 0) return `${m}m ago`;
+  return 'just now';
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
