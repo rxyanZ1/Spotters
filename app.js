@@ -17,6 +17,8 @@ window.addEventListener('DOMContentLoaded', () => {
   buildLegend();
   buildButtons();
   bindEvents();
+  bindAdminAuth();
+  updateAdminUI();
   updateVisibility();
   refreshBadges();
 });
@@ -208,11 +210,80 @@ document.getElementById('searchInput').addEventListener('input', e => {
   updateVisibility();
 });
 
-document.getElementById('adminToggle').addEventListener('click', () => {
-  adminMode = !adminMode;
-  document.getElementById('adminToggle').classList.toggle('on', adminMode);
-  document.getElementById('adminSection')?.classList.toggle('visible', adminMode);
-});
+function bindAdminAuth() {
+  const loginBtn = document.getElementById('adminLoginBtn');
+  const modal = document.getElementById('loginModalBackdrop');
+  const closeBtn = document.getElementById('loginCloseBtn');
+  const form = document.getElementById('loginForm');
+  const usernameInput = document.getElementById('loginUsername');
+  const passwordInput = document.getElementById('loginPassword');
+
+  loginBtn.addEventListener('click', () => {
+    if (adminMode) {
+      adminMode = false;
+      updateAdminUI();
+      rerenderSelectedPanel();
+      return;
+    }
+    openLoginModal();
+  });
+
+  closeBtn.addEventListener('click', closeLoginModal);
+
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeLoginModal();
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    if (username === 'admin' && password === 'admin') {
+      adminMode = true;
+      clearLoginError();
+      closeLoginModal();
+      updateAdminUI();
+      rerenderSelectedPanel();
+      return;
+    }
+
+    showLoginError('Invalid username or password.');
+    passwordInput.value = '';
+    passwordInput.focus();
+  });
+}
+
+function openLoginModal() {
+  document.getElementById('loginModalBackdrop').classList.remove('hidden');
+  clearLoginError();
+  document.getElementById('loginForm').reset();
+  document.getElementById('loginUsername').focus();
+}
+
+function closeLoginModal() {
+  document.getElementById('loginModalBackdrop').classList.add('hidden');
+}
+
+function showLoginError(message) {
+  document.getElementById('loginError').textContent = message;
+}
+
+function clearLoginError() {
+  document.getElementById('loginError').textContent = '';
+}
+
+function updateAdminUI() {
+  const loginBtn = document.getElementById('adminLoginBtn');
+  loginBtn.textContent = adminMode ? 'Admin Logout' : 'Admin Login';
+  loginBtn.classList.toggle('logged-in', adminMode);
+}
+
+function rerenderSelectedPanel() {
+  if (!selectedId) return;
+  const b = BUILDINGS.find(x => x.id === selectedId);
+  if (b) openPanel(b);
+}
 
 // ── Events ────────────────────────────────────────────────────────────────
 function bindEvents() {
@@ -263,11 +334,18 @@ function bindEvents() {
   document.getElementById('zoomReset').onclick = fitMap;
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && selectedId) {
-      const prev = BUILDINGS.find(b => b.id === selectedId);
-      const el = document.getElementById('btn-' + selectedId);
-      if (el && prev) { el.classList.remove('active'); el.style.transform = 'translate(-50%,-50%) scale(1)'; }
-      selectedId = null; closePanel();
+    if (e.key === 'Escape') {
+      const loginModal = document.getElementById('loginModalBackdrop');
+      if (loginModal && !loginModal.classList.contains('hidden')) {
+        closeLoginModal();
+        return;
+      }
+      if (selectedId) {
+        const prev = BUILDINGS.find(b => b.id === selectedId);
+        const el = document.getElementById('btn-' + selectedId);
+        if (el && prev) { el.classList.remove('active'); el.style.transform = 'translate(-50%,-50%) scale(1)'; }
+        selectedId = null; closePanel();
+      }
     }
     const tag = document.activeElement.tagName;
     if ((e.key==='f'||e.key==='/') && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
